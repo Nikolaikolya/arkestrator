@@ -8,6 +8,7 @@ http:
     traefik-dashboard:
       rule: "Host(`traefik.guide-it.ru`)"
       entryPoints:
+        - web
         - websecure
       service: api@internal
       tls:

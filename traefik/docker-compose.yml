@@ -15,11 +15,12 @@ services:
       - ./dynamic:/etc/traefik/dynamic:ro
       - ./config:/etc/traefik/config:ro
       - ./certs:/letsencrypt
+      - ./logs:/var/log/traefik
     networks:
       - traefik-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`traefik.bp.guide-it.ru`)"
+      - "traefik.http.routers.api.rule=Host(`${TRAEFIK_DOMAIN:-traefik.guide-it.ru}`)"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=auth,securityHeaders@file"
@@ -33,7 +34,7 @@ services:
 
   # Prometheus для мониторинга
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:${PROMETHEUS_VERSION:-latest}
     container_name: prometheus
     restart: always
     volumes:
@@ -51,7 +52,7 @@ services:
 
   # Grafana для визуализации метрик
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:${GRAFANA_VERSION:-latest}
     container_name: grafana
     restart: always
     volumes:

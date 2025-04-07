@@ -34,12 +34,6 @@ metrics:
 entryPoints:
   web:
     address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true
   websecure:
     address: ":443"
     http:
@@ -62,7 +56,8 @@ certificatesResolvers:
     acme:
       email: ${ACME_EMAIL:-fntraders@ya.ru}
       storage: /letsencrypt/acme.json
-      tlsChallenge: {}
+      httpChallenge:
+        entryPoint: web
 
 # Глобальные настройки TLS
 tls:

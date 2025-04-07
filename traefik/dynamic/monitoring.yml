@@ -2,7 +2,8 @@ http:
   routers:
     prometheus:
       rule: "Host(`prometheus.guide-it.ru`)"
-      entrypoints:
+      entryPoints:
+        - web
         - websecure
       middlewares:
         - auth
@@ -12,7 +13,8 @@ http:
     
     grafana:
       rule: "Host(`grafana.guide-it.ru`)"
-      entrypoints:
+      entryPoints:
+        - web
         - websecure
       service: grafana
       tls:
