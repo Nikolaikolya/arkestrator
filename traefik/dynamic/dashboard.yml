@@ -6,7 +6,7 @@ http:
 
   routers:
     api:
-      rule: "Host(`traefik.guide-it.ru`)"
+      rule: "Host(`traefik.guide-it.ru`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
       entryPoints:
         - web
         - websecure
@@ -15,5 +15,31 @@ http:
         certResolver: myresolver
       middlewares:
         - auth
-        - securityHeaders@file
-        - rateLimit@file
+    
+    # Добавляем прямой роут для корня домена
+    api-root:
+      rule: "Host(`traefik.guide-it.ru`)"
+      entryPoints:
+        - web
+        - websecure
+      service: api@internal
+      tls:
+        certResolver: myresolver
+      middlewares:
+        - api-redirect
+    
+    # Роутер для прямого доступа через порт 8080
+    dashboard:
+      rule: "HostRegexp(`{host:.+}`)"
+      entryPoints:
+        - dashboard
+      service: api@internal
+      priority: 1
+
+  # Редирект с корня на /dashboard/
+  middlewares:
+    api-redirect:
+      redirectRegex:
+        regex: "^https?://([^/]+)/?$"
+        replacement: "https://${1}/dashboard/"
+        permanent: true

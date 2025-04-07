@@ -3,65 +3,83 @@
 ## Быстрый запуск
 
 ```bash
-# Запуск Traefik
-docker compose up -d
+# Перезапуск Traefik с новыми настройками
+chmod +x update-dashboard.sh
+./update-dashboard.sh
 
-# Проверка состояния
-docker compose ps
-
-# Просмотр логов
-docker compose logs -f traefik
+# Проверка доступности панели управления
+chmod +x check-dashboard.sh
+./check-dashboard.sh
 ```
 
-## Проверка работоспособности
+## Доступ к панели управления
 
-1. **Панель управления**: https://traefik.guide-it.ru/dashboard/
-2. **API**: https://traefik.guide-it.ru/api/overview
+Панель управления Traefik доступна по нескольким URL:
+
+1. **Основной URL панели управления:** 
+   - https://traefik.guide-it.ru/dashboard/
+
+2. **API Traefik:**
+   - https://traefik.guide-it.ru/api/
+   - https://traefik.guide-it.ru/api/overview
+   - https://traefik.guide-it.ru/api/http/routers
+
+3. **Прямой доступ через порт 8080:**
+   - http://localhost:8080/dashboard/
+   - http://localhost:8080/api/
 
 Доступ защищен паролем:
 - Пользователь: admin
 - Пароль: admin
 
-## Решение проблем
+## Решение проблем с панелью управления
 
-### 1. Проблемы с сертификатами
+Если панель управления недоступна (ошибка 404):
 
-```bash
-# Запуск диагностики
-./check-cert.sh
-
-# Принудительный сброс сертификатов
-./reset-certs.sh
-```
-
-### 2. Проблемы с доступом к панели управления (404)
-
-Если видите ошибку 404 при попытке доступа к панели управления:
-
-1. Убедитесь, что в traefik.yml опция api.dashboard включена:
-   ```yaml
-   api:
-     dashboard: true
-   ```
-
-2. Убедитесь, что в dynamic/dashboard.yml правильно настроен роутер:
-   ```yaml
-   http:
-     routers:
-       api:
-         rule: "Host(`traefik.guide-it.ru`)"
-         service: api@internal
-   ```
-
-3. Перезапустите Traefik:
+1. **Проверьте прямой доступ через порт 8080**:
    ```bash
-   docker compose down
-   docker compose up -d
+   curl -I http://localhost:8080/api/version
+   ```
+   Если доступен, значит проблема с маршрутизацией, а не с самим API.
+
+2. **Проверьте конфигурацию**:
+   ```bash
+   # Настройки API в traefik.yml
+   grep -A5 "api:" traefik/traefik.yml
+   
+   # Роутеры в docker-compose.yml
+   grep -A10 "labels:" traefik/docker-compose.yml
    ```
 
-### 3. Тестирование доступности
+3. **Проверьте логи Traefik**:
+   ```bash
+   docker-compose logs -f traefik | grep -E "api|dashboard|router|middleware"
+   ```
+
+4. **Перезапустите Traefik с отладкой**:
+   ```bash
+   ./update-dashboard.sh
+   ```
+
+## Доступные утилиты
+
+- **update-dashboard.sh** - перезапуск Traefik и проверка доступности панели управления
+- **check-dashboard.sh** - подробная проверка всех возможных URL
+- **reset-certs.sh** - сброс сертификатов при проблемах с HTTPS
+- **check-cert.sh** - диагностика проблем с сертификатами
+
+## Полезные команды
 
 ```bash
-# Выполнить тесты доступности
-./test-redirect.sh
+# Просмотр активных роутеров
+curl -s http://localhost:8080/api/http/routers | grep -E "name|rule|service"
+
+# Просмотр middleware
+curl -s http://localhost:8080/api/http/middlewares | grep -E "name|type"
+
+# Проверка конкретного URL
+curl -k -I https://traefik.guide-it.ru/dashboard/
+
+# Просмотр логов
+docker-compose logs -f traefik
 ``` 

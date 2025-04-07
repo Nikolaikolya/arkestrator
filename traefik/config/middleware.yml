@@ -4,7 +4,7 @@ http:
       basicAuth:
         users:
           - "admin:$apr1$ZPgMJnL7$8gWbwZ2MvbXY0IukZpNCG."  # пароль admin
-    
+
     # Сжатие ответов
     compress:
       compress: {}
