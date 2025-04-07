@@ -1,0 +1,44 @@
+http:
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "admin:$apr1$ZPgMJnL7$8gWbwZ2MvbXY0IukZpNCG."  # пароль admin
+    
+    # Сжатие ответов
+    compress:
+      compress: {}
+    
+    # Заголовки безопасности
+    securityHeaders:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+    
+    # Ограничение скорости запросов
+    rateLimit:
+      rateLimit:
+        average: 100
+        burst: 50
+    
+    # Комбинированный middleware для API
+    api-chain:
+      chain:
+        middlewares:
+          - securityHeaders
+          - compress
+          - rateLimit
+    
+    # Комбинированный middleware для веб-интерфейса
+    web-chain:
+      chain:
+        middlewares:
+          - securityHeaders
+          - compress

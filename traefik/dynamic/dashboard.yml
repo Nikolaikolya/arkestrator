@@ -1,0 +1,18 @@
+http:
+  middlewares:
+    auth:
+      basicAuth:
+        usersFile: /etc/traefik/dynamic/usersfile
+
+  routers:
+    traefik-dashboard:
+      rule: "Host(`traefik.your-domain.ru`)"
+      entryPoints:
+        - websecure
+      service: api@internal
+      tls:
+        certResolver: myresolver
+      middlewares:
+        - auth
+        - securityHeaders@file
+        - rateLimit@file

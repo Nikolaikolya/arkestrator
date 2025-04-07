@@ -1,0 +1,6 @@
+deploy-cmd
+.idea
+.vscode
+node_modules
+.env
+.cursor
