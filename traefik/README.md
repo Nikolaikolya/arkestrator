@@ -1,114 +1,129 @@
-# Traefik - инструкция по запуску
+# Traefik - Руководство по использованию
+
+Готовый к использованию прокси-сервер Traefik с поддержкой автоматического получения SSL-сертификатов, мониторингом и панелью управления.
 
 ## Быстрый запуск
 
 ```bash
+# Сделать скрипт управления исполняемым
+chmod +x traefik-cli.sh
+
+# Исправление прав доступа (выполнить один раз перед запуском)
+./traefik-cli.sh fix
+
 # Запуск всех контейнеров
-docker compose up -d
+./traefik-cli.sh start
 
 # Проверка статуса
-docker compose ps
+./traefik-cli.sh status
 ```
 
-## Решение проблемы с перезапусками
-
-Если Traefik постоянно перезапускается, выполните:
+## Команды управления
 
 ```bash
-# Запуск скрипта для исправления прав доступа и проблем с портами
-chmod +x fix-permissions.sh
-./fix-permissions.sh
+./traefik-cli.sh start    # Запуск Traefik
+./traefik-cli.sh stop     # Остановка Traefik
+./traefik-cli.sh restart  # Перезапуск Traefik
+./traefik-cli.sh logs     # Просмотр логов
+./traefik-cli.sh status   # Проверка статуса
+./traefik-cli.sh fix      # Исправление прав доступа
+./traefik-cli.sh help     # Показать справку
 ```
-
-### Часто встречающиеся ошибки:
-
-1. **Неправильные права доступа к acme.json**
-   ```
-   error: "unable to get ACME account: permissions 644 for /letsencrypt/acme.json are too open, please use 600"
-   ```
-   Решение: установить правильные права доступа
-   ```bash
-   chmod 600 traefik/certs/acme.json
-   ```
-
-2. **Занятые порты**
-   ```
-   error: "error opening listener: listen tcp :8081: bind: address already in use"
-   ```
-   Решение: найти и остановить процесс, использующий порт
-   ```bash
-   sudo lsof -i :8081
-   sudo kill <PID>
-   ```
 
 ## Доступ к сервисам
 
-Панель управления Traefik доступна по адресу:
-- https://traefik.guide-it.ru (панель управления)
-- http://localhost:8081 (прямой доступ к API)
+После запуска доступны следующие сервисы:
 
-Доступ к мониторингу:
-- https://prometheus.guide-it.ru (Prometheus)
-- https://grafana.guide-it.ru (Grafana)
+- **Панель управления Traefik:**
+  - https://traefik.guide-it.ru
+  - http://localhost:8081 (прямой доступ к API)
 
-Доступ защищен паролем:
-- Пользователь: admin
-- Пароль: admin
-
-## Структура конфигурации
-
-- **traefik.yml** - основные настройки Traefik
-- **dynamic/dashboard.yml** - настройки панели управления
-- **dynamic/usersfile** - файл с пользователями для аутентификации
-- **config/middleware.yml** - настройки middleware для безопасности
-
-## Доступ к панели управления
-
-Панель управления Traefik доступна по нескольким URL:
-
-1. **Основной URL панели управления:** 
-   - https://traefik.guide-it.ru/dashboard/
-
-2. **API Traefik:**
-   - https://traefik.guide-it.ru/api/
-   - https://traefik.guide-it.ru/api/overview
-   - https://traefik.guide-it.ru/api/http/routers
-
-3. **Прямой доступ через порт 8080:**
-   - http://localhost:8080/dashboard/
-   - http://localhost:8080/api/
+- **Мониторинг:**
+  - https://prometheus.guide-it.ru (Prometheus)
+  - https://grafana.guide-it.ru (Grafana)
 
 Доступ защищен паролем:
 - Пользователь: admin
 - Пароль: admin
 
-## Решение проблем с панелью управления
+## Структура проекта
 
-Если панель управления недоступна (ошибка 404):
+```
+traefik/
+├── traefik.yml           # Основная конфигурация Traefik
+├── docker-compose.yml    # Конфигурация Docker Compose
+├── traefik-cli.sh        # Скрипт для управления Traefik
+├── certs/                # Каталог для сертификатов
+│   └── acme.json         # Файл с сертификатами (создается автоматически)
+├── config/               # Статическая конфигурация 
+│   └── middleware.yml    # Middleware для безопасности
+├── dynamic/              # Динамическая конфигурация
+│   ├── dashboard.yml     # Настройка панели управления 
+│   └── usersfile         # Файл с пользователями для аутентификации
+└── prometheus/           # Конфигурация Prometheus
+    └── prometheus.yml    # Настройки Prometheus
+```
 
-1. **Проверьте прямой доступ через порт 8080**:
+## Добавление новых сервисов
+
+Для добавления нового сервиса используйте следующий шаблон в `docker-compose.yml`:
+
+```yaml
+my-service:
+  image: my-image
+  container_name: my-service
+  networks:
+    - traefik-net
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.my-service.rule=Host(`my-service.example.com`)"
+    - "traefik.http.routers.my-service.entrypoints=websecure"
+    - "traefik.http.routers.my-service.tls.certresolver=myresolver"
+    - "traefik.http.services.my-service.loadbalancer.server.port=8080"
+```
+
+## Устранение неполадок
+
+### Проблемы с сертификатами
+
+Если возникают проблемы с получением сертификатов:
+
+1. Убедитесь, что правильно настроены DNS-записи
    ```bash
-   curl -I http://localhost:8080/api/version
+   # Проверка IP, на который указывает домен
+   dig +short traefik.guide-it.ru
+   # Сравните с IP вашего сервера
+   curl -s ifconfig.me
    ```
-   Если доступен, значит проблема с маршрутизацией, а не с самим API.
 
-2. **Проверьте конфигурацию**:
+2. Проверьте права доступа к файлу сертификатов:
    ```bash
-   # Настройки API в traefik.yml
-   grep -A5 "api:" traefik/traefik.yml
-   
-   # Роутеры в docker compose.yml
-   grep -A10 "labels:" traefik/docker compose.yml
+   # Исправление прав доступа
+   ./traefik-cli.sh fix
    ```
 
-3. **Проверьте логи Traefik**:
+3. Проверьте логи на ошибки:
    ```bash
-   docker compose logs -f traefik | grep -E "api|dashboard|router|middleware"
+   ./traefik-cli.sh logs
    ```
 
-4. **Перезапустите Traefik с отладкой**:
+### Проблемы с доступом к панели управления
+
+Если панель управления недоступна:
+
+1. Проверьте, запущен ли Traefik:
    ```bash
-   ./update-dashboard.sh
+   ./traefik-cli.sh status
+   ```
+
+2. Проверьте прямой доступ через порт 8081:
+   ```bash
+   curl -s http://localhost:8081/api/version
+   ```
+
+3. Проверьте конфигурацию роутеров:
+   ```bash
+   curl -s http://localhost:8081/api/http/routers | grep -E "name|rule|service"
    ```
 
 ## Доступные утилиты

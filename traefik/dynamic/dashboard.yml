@@ -3,10 +3,16 @@ http:
     auth:
       basicAuth:
         usersFile: /etc/traefik/dynamic/usersfile
+    
+    dashboard-redirect:
+      redirectRegex:
+        regex: "^https?://([^/]+)/?$"
+        replacement: "https://${1}/dashboard/"
+        permanent: true
 
   routers:
-    dashboard:
-      rule: "Host(`traefik.guide-it.ru`)"
+    api:
+      rule: "Host(`traefik.guide-it.ru`) && PathPrefix(`/api`)"
       entryPoints:
         - websecure
       service: api@internal
@@ -14,11 +20,14 @@ http:
         certResolver: myresolver
       middlewares:
         - auth
-
-  # Редирект с корня на /dashboard/
-  middlewares:
-    api-redirect:
-      redirectRegex:
-        regex: "^https?://([^/]+)/?$"
-        replacement: "https://${1}/dashboard/"
-        permanent: true
+    
+    dashboard:
+      rule: "Host(`traefik.guide-it.ru`) && (PathPrefix(`/dashboard`) || Path(`/`))"
+      entryPoints:
+        - websecure
+      service: api@internal
+      tls:
+        certResolver: myresolver
+      middlewares:
+        - auth
+        - dashboard-redirect

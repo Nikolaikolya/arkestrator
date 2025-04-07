@@ -23,6 +23,13 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.dashboard.middlewares=auth@file"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8081/api/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
   # Prometheus для мониторинга
   prometheus:
@@ -39,6 +46,7 @@ services:
       - "traefik.http.routers.prometheus.rule=Host(`prometheus.guide-it.ru`)"
       - "traefik.http.routers.prometheus.entrypoints=websecure"
       - "traefik.http.routers.prometheus.tls.certresolver=myresolver"
+      - "traefik.http.routers.prometheus.middlewares=auth@file"
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   # Grafana для визуализации метрик
