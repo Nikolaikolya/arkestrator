@@ -12,30 +12,40 @@ docker compose ps
 
 ## Решение проблемы с перезапусками
 
-Если Traefik постоянно перезапускается:
+Если Traefik постоянно перезапускается, выполните:
 
-1. **Проверьте логи для выявления ошибок**:
+```bash
+# Запуск скрипта для исправления прав доступа и проблем с портами
+chmod +x fix-permissions.sh
+./fix-permissions.sh
+```
+
+### Часто встречающиеся ошибки:
+
+1. **Неправильные права доступа к acme.json**
+   ```
+   error: "unable to get ACME account: permissions 644 for /letsencrypt/acme.json are too open, please use 600"
+   ```
+   Решение: установить правильные права доступа
    ```bash
-   docker compose logs traefik | grep -i "error\|fatal\|panic"
+   chmod 600 traefik/certs/acme.json
    ```
 
-2. **Используйте скрипт восстановления**:
-   ```bash
-   chmod +x fix-traefik.sh
-   ./fix-traefik.sh
+2. **Занятые порты**
    ```
-
-3. **Для перезапуска с проверками**:
+   error: "error opening listener: listen tcp :8081: bind: address already in use"
+   ```
+   Решение: найти и остановить процесс, использующий порт
    ```bash
-   chmod +x update-dashboard.sh
-   ./update-dashboard.sh
+   sudo lsof -i :8081
+   sudo kill <PID>
    ```
 
 ## Доступ к сервисам
 
 Панель управления Traefik доступна по адресу:
 - https://traefik.guide-it.ru (панель управления)
-- http://localhost:8080 (прямой доступ к API)
+- http://localhost:8081 (прямой доступ к API)
 
 Доступ к мониторингу:
 - https://prometheus.guide-it.ru (Prometheus)
@@ -111,15 +121,19 @@ docker compose ps
 ## Полезные команды
 
 ```bash
-# Просмотр активных роутеров
-curl -s http://localhost:8080/api/http/routers | grep -E "name|rule|service"
+# Проверка прав доступа к acme.json
+ls -la traefik/certs/acme.json
+chmod 600 traefik/certs/acme.json
 
-# Просмотр middleware
-curl -s http://localhost:8080/api/http/middlewares | grep -E "name|type"
+# Просмотр активных роутеров
+curl -s http://localhost:8081/api/http/routers | grep -E "name|rule|service"
 
 # Проверка конкретного URL
 curl -k -I https://traefik.guide-it.ru/dashboard/
 
 # Просмотр логов
 docker compose logs -f traefik
+
+# Перезапуск с проверками
+./update-dashboard.sh
 ``` 

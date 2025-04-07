@@ -12,6 +12,11 @@ docker compose up -d
 echo "Ожидание запуска сервисов..."
 sleep 10
 
+# Исправляем права доступа к acme.json
+echo "Проверяю права доступа к файлу acme.json..."
+chmod 600 ./certs/acme.json
+ls -la ./certs/acme.json
+
 # Проверка статуса контейнеров
 echo -e "\nПроверка статуса контейнеров:"
 docker compose ps
@@ -21,14 +26,14 @@ echo -e "\nПроверка логов на наличие ошибок:"
 docker compose logs traefik | grep -i "error\|fatal\|panic" | tail -10
 
 # Прямой доступ к API
-echo -e "\nПроверка доступа к API через порт 8080:"
-curl -s http://localhost:8080/api/version
+echo -e "\nПроверка доступа к API через порт 8081:"
+curl -s http://localhost:8081/api/version
 
 echo -e "\nПроверка доступа к панели управления через HTTPS:"
 curl -k -I https://traefik.guide-it.ru/dashboard/
 
 echo -e "\nПроверка роутеров:"
-curl -s http://localhost:8080/api/http/routers | grep -E "name|rule|service"
+curl -s http://localhost:8081/api/http/routers | grep -E "name|rule|service"
 
 echo -e "\nВсе готово. Если Traefik продолжает перезапускаться, проверьте логи командой:"
 echo "docker compose logs -f traefik" 

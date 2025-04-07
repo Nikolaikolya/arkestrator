@@ -19,7 +19,7 @@ entryPoints:
   websecure:
     address: ":443"
   dashboard:
-    address: ":8080"
+    address: ":8081"
 
 providers:
   docker:
