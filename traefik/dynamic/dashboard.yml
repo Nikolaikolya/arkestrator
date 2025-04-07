@@ -5,7 +5,7 @@ http:
         usersFile: /etc/traefik/dynamic/usersfile
 
   routers:
-    traefik-dashboard:
+    dashboard:
       rule: "Host(`traefik.guide-it.ru`)"
       entryPoints:
         - web

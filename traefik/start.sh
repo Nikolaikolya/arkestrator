@@ -8,15 +8,15 @@ touch certs/acme.json
 chmod 600 certs/acme.json
 
 # Останавливаем предыдущий экземпляр, если запущен
-docker-compose down
+docker compose down
 
 # Запускаем сервисы
-docker-compose up -d
+docker compose up -d
 
 # Проверяем статус
 echo "Проверка статуса контейнеров:"
-docker-compose ps
+docker compose ps
 
 # Показываем логи Traefik
 echo "Логи Traefik (Ctrl+C для выхода):"
-docker-compose logs -f traefik 
+docker compose logs -f traefik 
