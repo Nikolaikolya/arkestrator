@@ -15,38 +15,18 @@ services:
       - ./dynamic:/etc/traefik/dynamic:ro
       - ./config:/etc/traefik/config:ro
       - ./certs:/letsencrypt
-      - ./logs:/var/log/traefik
     networks:
       - traefik-net
-    command:
-      - "--log.level=DEBUG"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
-      - "--entrypoints.dashboard.address=:8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.regex=^https?://traefik.guide-it.ru/?$$"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.replacement=https://traefik.guide-it.ru/dashboard/"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.permanent=true"
-      - "traefik.http.routers.api-root.rule=Host(`traefik.guide-it.ru`)"
-      - "traefik.http.routers.api-root.entrypoints=web,websecure"
-      - "traefik.http.routers.api-root.middlewares=dashboard-redirect"
-      - "traefik.http.routers.api-root.tls.certresolver=myresolver"
-      - "traefik.http.routers.api-path.rule=Host(`traefik.guide-it.ru`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-      - "traefik.http.routers.api-path.entrypoints=web,websecure"
-      - "traefik.http.routers.api-path.service=api@internal"
-      - "traefik.http.routers.api-path.tls.certresolver=myresolver"
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8080/api/overview"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.guide-it.ru`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
 
   # Prometheus для мониторинга
   prometheus:
-    image: prom/prometheus:${PROMETHEUS_VERSION:-latest}
+    image: prom/prometheus:latest
     container_name: prometheus
     restart: always
     volumes:
@@ -54,28 +34,31 @@ services:
       - prometheus_data:/prometheus
     networks:
       - traefik-net
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-    depends_on:
-      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.guide-it.ru`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls.certresolver=myresolver"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   # Grafana для визуализации метрик
   grafana:
-    image: grafana/grafana:${GRAFANA_VERSION:-latest}
+    image: grafana/grafana:latest
     container_name: grafana
     restart: always
     volumes:
       - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
       - traefik-net
-    depends_on:
-      - prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.guide-it.ru`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
 networks:
   traefik-net:

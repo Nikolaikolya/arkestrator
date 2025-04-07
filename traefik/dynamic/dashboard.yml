@@ -5,36 +5,15 @@ http:
         usersFile: /etc/traefik/dynamic/usersfile
 
   routers:
-    api:
-      rule: "Host(`traefik.guide-it.ru`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+    dashboard:
+      rule: "Host(`traefik.guide-it.ru`)"
       entryPoints:
-        - web
         - websecure
       service: api@internal
       tls:
         certResolver: myresolver
       middlewares:
         - auth
-    
-    # Добавляем прямой роут для корня домена
-    api-root:
-      rule: "Host(`traefik.guide-it.ru`)"
-      entryPoints:
-        - web
-        - websecure
-      service: api@internal
-      tls:
-        certResolver: myresolver
-      middlewares:
-        - api-redirect
-    
-    # Роутер для прямого доступа через порт 8080
-    dashboard:
-      rule: "HostRegexp(`{host:.+}`)"
-      entryPoints:
-        - dashboard
-      service: api@internal
-      priority: 1
 
   # Редирект с корня на /dashboard/
   middlewares:

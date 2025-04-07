@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Обновление и проверка панели управления Traefik"
+echo "Перезапуск Traefik"
 echo "=============================================="
 
 # Перезапуск Traefik
@@ -10,40 +10,25 @@ docker compose up -d
 
 # Ожидание запуска
 echo "Ожидание запуска сервисов..."
-sleep 5
+sleep 10
 
-# Проверка работоспособности
-echo -e "\nПроверка прямого доступа к API через порт 8080:"
-echo "curl -s http://localhost:8080/api/version"
+# Проверка статуса контейнеров
+echo -e "\nПроверка статуса контейнеров:"
+docker compose ps
+
+# Проверка логов на наличие ошибок
+echo -e "\nПроверка логов на наличие ошибок:"
+docker compose logs traefik | grep -i "error\|fatal\|panic" | tail -10
+
+# Прямой доступ к API
+echo -e "\nПроверка доступа к API через порт 8080:"
 curl -s http://localhost:8080/api/version
-echo
 
-# Проверка доступа через HTTPS
-echo -e "\nПроверка доступа к dashboard через HTTPS:"
-echo "curl -k -I https://traefik.guide-it.ru/dashboard/"
+echo -e "\nПроверка доступа к панели управления через HTTPS:"
 curl -k -I https://traefik.guide-it.ru/dashboard/
-echo
 
-# Проверка доступа к API
-echo -e "\nПроверка доступа к API через HTTPS:"
-echo "curl -k -I https://traefik.guide-it.ru/api/overview"
-curl -k -I https://traefik.guide-it.ru/api/overview
-echo
+echo -e "\nПроверка роутеров:"
+curl -s http://localhost:8080/api/http/routers | grep -E "name|rule|service"
 
-# Проверка доступа к корню (должен быть редирект)
-echo -e "\nПроверка редиректа с корня домена:"
-echo "curl -k -I https://traefik.guide-it.ru/"
-curl -k -I -L https://traefik.guide-it.ru/
-echo
-
-# Отображение роутеров
-echo -e "\nАктивные роутеры Traefik:"
-curl -s http://localhost:8080/api/http/routers | grep -E "status|service|rule"
-echo
-
-echo -e "\nВсе готово! Traefik должен быть доступен по адресу:"
-echo "- Dashboard: https://traefik.guide-it.ru/dashboard/"
-echo "- API:       https://traefik.guide-it.ru/api/"
-echo
-echo "Для устранения проблем с доступом проверьте логи:"
+echo -e "\nВсе готово. Если Traefik продолжает перезапускаться, проверьте логи командой:"
 echo "docker compose logs -f traefik" 

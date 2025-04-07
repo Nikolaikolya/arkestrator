@@ -3,14 +3,54 @@
 ## Быстрый запуск
 
 ```bash
-# Перезапуск Traefik с новыми настройками
-chmod +x update-dashboard.sh
-./update-dashboard.sh
+# Запуск всех контейнеров
+docker compose up -d
 
-# Проверка доступности панели управления
-chmod +x check-dashboard.sh
-./check-dashboard.sh
+# Проверка статуса
+docker compose ps
 ```
+
+## Решение проблемы с перезапусками
+
+Если Traefik постоянно перезапускается:
+
+1. **Проверьте логи для выявления ошибок**:
+   ```bash
+   docker compose logs traefik | grep -i "error\|fatal\|panic"
+   ```
+
+2. **Используйте скрипт восстановления**:
+   ```bash
+   chmod +x fix-traefik.sh
+   ./fix-traefik.sh
+   ```
+
+3. **Для перезапуска с проверками**:
+   ```bash
+   chmod +x update-dashboard.sh
+   ./update-dashboard.sh
+   ```
+
+## Доступ к сервисам
+
+Панель управления Traefik доступна по адресу:
+- https://traefik.guide-it.ru (панель управления)
+- http://localhost:8080 (прямой доступ к API)
+
+Доступ к мониторингу:
+- https://prometheus.guide-it.ru (Prometheus)
+- https://grafana.guide-it.ru (Grafana)
+
+Доступ защищен паролем:
+- Пользователь: admin
+- Пароль: admin
+
+## Структура конфигурации
+
+- **traefik.yml** - основные настройки Traefik
+- **dynamic/dashboard.yml** - настройки панели управления
+- **dynamic/usersfile** - файл с пользователями для аутентификации
+- **config/middleware.yml** - настройки middleware для безопасности
 
 ## Доступ к панели управления
 
@@ -47,13 +87,13 @@ chmod +x check-dashboard.sh
    # Настройки API в traefik.yml
    grep -A5 "api:" traefik/traefik.yml
    
-   # Роутеры в docker-compose.yml
-   grep -A10 "labels:" traefik/docker-compose.yml
+   # Роутеры в docker compose.yml
+   grep -A10 "labels:" traefik/docker compose.yml
    ```
 
 3. **Проверьте логи Traefik**:
    ```bash
-   docker-compose logs -f traefik | grep -E "api|dashboard|router|middleware"
+   docker compose logs -f traefik | grep -E "api|dashboard|router|middleware"
    ```
 
 4. **Перезапустите Traefik с отладкой**:
@@ -81,5 +121,5 @@ curl -s http://localhost:8080/api/http/middlewares | grep -E "name|type"
 curl -k -I https://traefik.guide-it.ru/dashboard/
 
 # Просмотр логов
-docker-compose logs -f traefik
+docker compose logs -f traefik
 ``` 

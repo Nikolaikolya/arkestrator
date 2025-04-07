@@ -3,28 +3,15 @@ global:
   sendAnonymousUsage: false
 
 log:
-  level: DEBUG
+  level: INFO
   format: json
-  filePath: /var/log/traefik/traefik.log
 
 accessLog:
-  filePath: /var/log/traefik/access.log
   format: json
 
 api:
   dashboard: true
   insecure: true
-  debug: true
-
-metrics:
-  prometheus:
-    addEntryPointsLabels: true
-    addServicesLabels: true
-    buckets:
-      - 0.1
-      - 0.3
-      - 1.2
-      - 5.0
 
 entryPoints:
   web:
@@ -33,9 +20,6 @@ entryPoints:
     address: ":443"
   dashboard:
     address: ":8080"
-    http:
-      tls:
-        certResolver: myresolver
 
 providers:
   docker:
@@ -52,13 +36,10 @@ certificatesResolvers:
     acme:
       email: fntraders@ya.ru
       storage: /letsencrypt/acme.json
-      caServer: "https://acme-v02.api.letsencrypt.org/directory"
       httpChallenge:
         entryPoint: web
 
-# Глобальные настройки TLS
 tls:
   options:
     default:
       minVersion: VersionTLS12
-      sniStrict: true
