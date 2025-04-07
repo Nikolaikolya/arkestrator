@@ -31,3 +31,11 @@ http:
       middlewares:
         - auth
         - dashboard-redirect
+    
+    dashboard-http:
+      rule: "Host(`traefik.guide-it.ru`)"
+      entryPoints:
+        - web
+      service: api@internal
+      middlewares:
+        - auth

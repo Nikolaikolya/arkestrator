@@ -21,13 +21,15 @@ chmod +x traefik-cli.sh
 ## Команды управления
 
 ```bash
-./traefik-cli.sh start    # Запуск Traefik
-./traefik-cli.sh stop     # Остановка Traefik
-./traefik-cli.sh restart  # Перезапуск Traefik
-./traefik-cli.sh logs     # Просмотр логов
-./traefik-cli.sh status   # Проверка статуса
-./traefik-cli.sh fix      # Исправление прав доступа
-./traefik-cli.sh help     # Показать справку
+./traefik-cli.sh start      # Запуск Traefik
+./traefik-cli.sh stop       # Остановка Traefik
+./traefik-cli.sh restart    # Перезапуск Traefik
+./traefik-cli.sh logs       # Просмотр логов
+./traefik-cli.sh status     # Проверка статуса
+./traefik-cli.sh fix        # Исправление прав доступа
+./traefik-cli.sh check-ssl  # Проверка SSL-сертификатов
+./traefik-cli.sh reset-ssl  # Полный сброс SSL-сертификатов
+./traefik-cli.sh help       # Показать справку
 ```
 
 ## Доступ к сервисам
@@ -82,56 +84,49 @@ my-service:
     - "traefik.http.services.my-service.loadbalancer.server.port=8080"
 ```
 
-## Устранение неполадок
+## Устранение неполадок с SSL
 
-### Проблемы с сертификатами
+### Диагностика проблем с сертификатами
 
-Если возникают проблемы с получением сертификатов:
+Для проверки статуса сертификатов:
 
-1. Убедитесь, что правильно настроены DNS-записи
+```bash
+# Проверить текущее состояние SSL
+./traefik-cli.sh check-ssl
+
+# Полный сброс сертификатов
+./traefik-cli.sh reset-ssl
+```
+
+### Типичные проблемы и решения
+
+1. **Отсутствие сертификатов**
+   - Проверьте, что домены доступны из интернета
+   - Временно отключите редирект с HTTP на HTTPS в traefik.yml
+   - Проверьте, что порт 80 доступен для HTTP challenge
+
+2. **Проблемы с правами доступа**
+   - Для acme.json требуются права 600
    ```bash
-   # Проверка IP, на который указывает домен
-   dig +short traefik.guide-it.ru
-   # Сравните с IP вашего сервера
-   curl -s ifconfig.me
-   ```
-
-2. Проверьте права доступа к файлу сертификатов:
-   ```bash
-   # Исправление прав доступа
    ./traefik-cli.sh fix
    ```
 
-3. Проверьте логи на ошибки:
-   ```bash
-   ./traefik-cli.sh logs
+3. **Превышение лимитов Let's Encrypt**
+   - Используйте staging-сервер для тестирования:
+   ```yaml
+   caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
    ```
 
-### Проблемы с доступом к панели управления
-
-Если панель управления недоступна:
-
-1. Проверьте, запущен ли Traefik:
+4. **Ошибки в логах**
+   - Проверьте логи на ошибки получения сертификатов:
    ```bash
-   ./traefik-cli.sh status
+   ./traefik-cli.sh logs | grep -i "certificate\|acme\|error"
    ```
 
-2. Проверьте прямой доступ через порт 8081:
-   ```bash
-   curl -s http://localhost:8081/api/version
-   ```
+### Использование HTTP для отладки
 
-3. Проверьте конфигурацию роутеров:
-   ```bash
-   curl -s http://localhost:8081/api/http/routers | grep -E "name|rule|service"
-   ```
-
-## Доступные утилиты
-
-- **update-dashboard.sh** - перезапуск Traefik и проверка доступности панели управления
-- **check-dashboard.sh** - подробная проверка всех возможных URL
-- **reset-certs.sh** - сброс сертификатов при проблемах с HTTPS
-- **check-cert.sh** - диагностика проблем с сертификатами
+Если SSL не работает, вы можете временно получить доступ к панели через HTTP:
+- http://traefik.guide-it.ru (требуется включенный роутер dashboard-http)
 
 ## Полезные команды
 
@@ -140,15 +135,12 @@ my-service:
 ls -la traefik/certs/acme.json
 chmod 600 traefik/certs/acme.json
 
+# Проверка DNS-записей
+dig +short traefik.guide-it.ru
+
 # Просмотр активных роутеров
 curl -s http://localhost:8081/api/http/routers | grep -E "name|rule|service"
 
-# Проверка конкретного URL
-curl -k -I https://traefik.guide-it.ru/dashboard/
-
 # Просмотр логов
 docker compose logs -f traefik
-
-# Перезапуск с проверками
-./update-dashboard.sh
 ``` 
