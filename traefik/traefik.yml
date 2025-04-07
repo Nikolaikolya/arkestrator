@@ -3,7 +3,7 @@ global:
   sendAnonymousUsage: false
 
 log:
-  level: DEBUG
+  level: INFO
   format: json
 
 accessLog:
@@ -16,6 +16,12 @@ api:
 entryPoints:
   web:
     address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
   websecure:
     address: ":443"
   dashboard:
@@ -36,7 +42,6 @@ certificatesResolvers:
     acme:
       email: fntraders@ya.ru
       storage: /letsencrypt/acme.json
-      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
       httpChallenge:
         entryPoint: web
 
