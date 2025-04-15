@@ -5,6 +5,7 @@ INIT_TRAEFIK_FILE="traefik/start.sh"
 SOURCE_FILE="deploy/deploy.yml"
 DESTINATION_DIR="/home/gitlab-runner/"
 
+# Проверка и запуск traefik
 if [ -f "$INIT_TRAEFIK_FILE" ]; then
     chmod +x $INIT_TRAEFIK_FILE
     echo "Запуск $INIT_TRAEFIK_FILE"
@@ -31,7 +32,6 @@ else
 fi
 
 # Копирование файла
-
 if [ -f "$SOURCE_FILE" ]; then
     cp "$SOURCE_FILE" "$DESTINATION_DIR"
     echo "Файл $SOURCE_FILE скопирован в $DESTINATION_DIR."
