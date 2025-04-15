@@ -34,6 +34,7 @@ fi
 # Копирование файла
 if [ -f "$SOURCE_FILE" ]; then
     cp "$SOURCE_FILE" "$DESTINATION_DIR"
+    sudo chown -R gitlab-runner:gitlab-runner "$SOURCE_FILE"
     echo "Файл $SOURCE_FILE скопирован в $DESTINATION_DIR."
 else
     echo "Файл $SOURCE_FILE не найден."
