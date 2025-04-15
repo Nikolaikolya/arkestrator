@@ -64,18 +64,14 @@ htpasswd -nb admin НОВЫЙ_ПАРОЛЬ
 
 ## Запуск Traefik
 
+Для полной установки с копированием файла
+```bash
+chmod +x ./initial.sh && ./initial.sh
+```
+
 ```bash
 cd traefik
 docker-compose up -d
-```
-
-## Обновление Traefik (Windows)
-
-Для обновления конфигурации без потери данных:
-
-```batch
-cd traefik
-update.bat
 ```
 
 ## Доступ к панели управления и мониторингу

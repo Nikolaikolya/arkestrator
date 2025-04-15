@@ -1,0 +1,27 @@
+deployments:
+  - name: deploy-app
+    description: "Деплой приложения"
+    working_dir: "/builds/${CI_PROJECT_PATH}"
+    events:
+      - name: deploy
+        description: "Запуск контейнера с метками Traefik"
+        commands:
+          - command: "docker stop {$CONTAINER_NAME} || true"
+            description: "Остановка старого контейнера"
+
+          - command: "docker rm {$CONTAINER_NAME} || true"
+            description: "Удаление контейнера"
+
+          - command: |
+              docker run -d \
+              --name {$CONTAINER_NAME} \
+              -p {$PORT}:3000 \
+              --restart always \
+              --label 'traefik.enable=true' \
+              --label 'traefik.http.routers.{$IMAGE_NAME}.rule=Host({$HOST}) || Host(`www.{$HOST}`)' \
+              --label 'traefik.http.routers.{$IMAGE_NAME}.entrypoints=websecure' \
+              --label 'traefik.http.routers.{$IMAGE_NAME}.tls.certresolver=myresolver' \
+              --label 'traefik.http.services.{$IMAGE_NAME}.loadbalancer.server.port={$PORT}' \
+              --network traefik-net \
+              {$IMAGE_NAME}
+            description: "Запуск нового контейнера"

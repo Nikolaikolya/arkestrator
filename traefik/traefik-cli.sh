@@ -3,9 +3,7 @@
 # Функции для управления Traefik
 start_traefik() {
   echo "Запуск Traefik..."
-  docker compose up -d
-  sleep 2
-  docker compose ps
+  chmod +x ./start.sh
 }
 
 stop_traefik() {
@@ -29,10 +27,10 @@ show_logs() {
 check_status() {
   echo "Статус контейнеров:"
   docker compose ps
-  
+
   echo -e "\nПроверка доступности API:"
   curl -s http://localhost:8081/api/version
-  
+
   echo -e "\nАктивные роутеры:"
   curl -s http://localhost:8081/api/http/routers | grep -E "name|rule|service" | head -20
 }
@@ -53,34 +51,34 @@ fix_permissions() {
 
 reset_ssl() {
   echo "Полный сброс SSL-сертификатов..."
-  
+
   # Остановка Traefik
   docker compose down
-  
+
   # Удаление старых сертификатов
   if [ -f "./certs/acme.json" ]; then
     echo "Удаление файла acme.json..."
     rm -f ./certs/acme.json
   fi
-  
+
   # Создание нового файла с правильными правами
   echo "Создание нового файла acme.json..."
   mkdir -p ./certs
   touch ./certs/acme.json
   chmod 600 ./certs/acme.json
   ls -la ./certs/acme.json
-  
+
   # Запуск Traefik
   echo "Перезапуск Traefik..."
   docker compose up -d
-  
+
   echo "Сертификаты сброшены. Проверьте логи для отслеживания процесса получения новых сертификатов:"
   echo "./traefik-cli.sh logs"
 }
 
 check_ssl() {
   echo "Проверка SSL-сертификатов..."
-  
+
   # Проверка размера acme.json
   if [ -f "./certs/acme.json" ]; then
     size=$(stat -c%s "./certs/acme.json")
@@ -92,7 +90,7 @@ check_ssl() {
   else
     echo "Файл acme.json не существует!"
   fi
-  
+
   # Проверка прав доступа
   if [ -f "./certs/acme.json" ]; then
     perms=$(stat -c "%a" "./certs/acme.json")
@@ -103,11 +101,11 @@ check_ssl() {
       echo "Права доступа acme.json корректные: 600"
     fi
   fi
-  
+
   # Проверка логов на ошибки SSL
   echo -e "\nПроверка логов на ошибки SSL:"
   docker compose logs traefik | grep -i "certificate\|error\|acme\|tls\|challenge" | tail -20
-  
+
   # Проверка DNS для основного домена
   echo -e "\nПроверка DNS для домена traefik.guide-it.ru:"
   if command -v dig &> /dev/null; then
@@ -117,7 +115,7 @@ check_ssl() {
   else
     echo "Не удалось проверить DNS - утилиты dig и nslookup не установлены"
   fi
-  
+
   echo -e "\nДля полного сброса сертификатов используйте:"
   echo "./traefik-cli.sh reset-ssl"
 }
@@ -165,4 +163,4 @@ case "$1" in
   help|*)
     show_help
     ;;
-esac 
+esac
